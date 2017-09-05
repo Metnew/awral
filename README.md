@@ -1,6 +1,6 @@
 # AWRAL
 
-### Awesome Wrapper for Redux Action Lifecycle
+### Awesome Wrapper for Redux Action's Lifecycle
 
 #### Why?
 > Assume you're using redux and redux-thunk.
