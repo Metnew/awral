@@ -1,0 +1,49 @@
+{
+	"name": "awral-example",
+	"version": "0.0.0",
+	"main": "src/index.jsx",
+	"description": "AWRAL",
+	"dependencies": {
+		"awral": "file:../",
+		"react": "^15.6.1",
+		"react-dom": "^15.6.1",
+		"redux": "^3.7.2",
+		"redux-thunk": "^2.2.0"
+	},
+	"scripts": {
+		"start": "webpack-dev-server --open --hot --inline"
+	},
+	"engines": {
+		"node": ">=6"
+	},
+	"author": {
+		"name": "Vladimir Metnew",
+		"email": "vladimirmetnew@gmail.com"
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Metnew/react-semantic.ui-starter.git"
+	},
+	"keywords": [
+		"react",
+		"redux",
+		"react-redux",
+		"starter",
+		"template",
+		"boilerplate",
+		"webpack"
+	],
+	"bugs": {
+		"url": "https://github.com/Metnew/react-semantic.ui-starter/issues"
+	},
+	"homepage": "https://github.com/Metnew/react-semantic.ui-starter#readme",
+	"moduleRoots": [
+		"./src/common",
+		"./src"
+	],
+	"devDependencies": {
+		"webpack": "^3.5.5",
+		"webpack-dev-server": "^2.7.1"
+	}
+}
