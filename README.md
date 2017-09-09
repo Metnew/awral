@@ -1,5 +1,7 @@
 # AWRAL
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/Metnew/awral.svg)](https://greenkeeper.io/)
+
 ### Awesome Wrapper for Redux Action's Lifecycle
 > Swiss Army knife for async actions in Redux.
 
