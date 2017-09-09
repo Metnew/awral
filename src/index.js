@@ -1,63 +1,63 @@
+class Wrapper {
+	pending () {}
+	transformBeforeCheck () {}
+	check () {}
+	transformAfterCheck () {}
+	success () {}
+	fail () {}
+	finally () {}
+}
 
-export const re = (api: Function) => (name: string) => (...args) => async (dispatch) => {
-	// Before something happens
-	before(dispatch) // dispatch({type: `${name}_PENDING`}, payload)
+let Awral = function Awral (asyncFunction) {
+	var self = this
+	return name => (...args) => async (dispatch, getState) => {
+		console.log(self, this)
+		const defaultArgs = {dispatch, getState, name}
+		self._pending({...defaultArgs, payload: {args}})
+		const preResult = self._transformBeforeCheck.apply(args)
+		const obtainedResult = await asyncFunction.apply(preResult)
+		const isSuccess = self._check(obtainedResult)
+		const result = self._transformAfterCheck(obtainedResult)
 
-	// 1. Payload must have all args
-	// 2. Transformation function for payload here ?
-	//
-	const result = when(await api(...args))
-
-	if (check(result)) {
-		success(dispatch)(result) // dispatch({type: `${name}_SUCCESS`, payload: result.data})
-	} else {
-		fail(dispatch)(result)
-		// dispatch({
-		//	type: `${name}_FAIL`,
-		//	payload: result.data
-		// })
+		if (isSuccess) {
+			self._success({...defaultArgs, payload: {args, result}})
+		} else {
+			self._fail({...defaultArgs, payload: {args, result}})
+		}
+		self._finally({...defaultArgs, payload: {args, result}})
 	}
-	final(dispatch)
 }
 
-// 1. сделать что-то до
-// 2. сделать асинхронщину
-// 3. сделать выбор основываясь на результате пункта 2
-// 4. сделать что-то после
-
-const awralWrapper = (Either) => (res) => Either(res)
-const checkResponseOK = (response) => {
-	return response.ok ? response : {}
+const actionCreator = status => ({dispatch, name, payload}) => {
+	dispatch({type: `${name}_${status.toUpperCase()}`}, payload)
 }
 
-const awral = Awral.of(AwralForLolActions)
+const actionsCreators = ['pending', 'success', 'fail', 'finally']
+	.map(a => {
+		return {[a]: actionCreator(a)}
+	})
+	.reduce((a, b) => {
+		return Object.assign({}, a, b)
+	})
 
-function Awral () {}
+const check = ({ok}) => ok
+const transformBeforeCheck = a => a
+const transformAfterCheck = a => a
 
-Awral.of = (fn) => {
-	return new Awral(fn)
+const behaviours = {
+	...actionsCreators,
+	check,
+	transformBeforeCheck,
+	transformAfterCheck
 }
 
-Awral.pending = (fn) => {
-	return fn ? fn(dispatch) : dispatch()
-}
-
-Awral.resolve = () => {
-
-}
-
-Awral.check = (fn) => {
-
-}
-
-Awral.ok = () => {
-
-}
-
-Awral.fail = () => {
-
-}
-
-Awral.finally = () => {
-
-}
+Object.keys(behaviours).map(key => {
+	const initialBehaviour = behaviours[key]
+	const privateName = `_${key}`
+	Awral[key] = (fn = initialBehaviour) => {
+		return Awral.clone(privateName)(fn)
+	}
+})
+// let pen = Awral.pending(a => a)
+// let keys = Object.getOwnPropertyNames(pen)
+export default Awral
