@@ -1,6 +1,7 @@
 # AWRAL
 
 ### Awesome Wrapper for Redux Action's Lifecycle
+> Swiss Army knife for async actions in Redux.
 
 #### Why?
 > Assume you're using redux and redux-thunk.
