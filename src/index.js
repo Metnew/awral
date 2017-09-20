@@ -1,38 +1,8 @@
-class Wrapper {
-	pending () {}
-	transformBeforeCheck () {}
-	check () {}
-	transformAfterCheck () {}
-	success () {}
-	fail () {}
-	finally () {}
+const actionCreator = status => ({dispatch, getState, name, ...rest}) => {
+	dispatch({type: `${name}_${status.toUpperCase()}`, ...rest})
 }
 
-let Awral = function Awral (asyncFunction) {
-	var self = this
-	return name => (...args) => async (dispatch, getState) => {
-		console.log(self, this)
-		const defaultArgs = {dispatch, getState, name}
-		self._pending({...defaultArgs, payload: {args}})
-		const preResult = self._transformBeforeCheck.apply(args)
-		const obtainedResult = await asyncFunction.apply(preResult)
-		const isSuccess = self._check(obtainedResult)
-		const result = self._transformAfterCheck(obtainedResult)
-
-		if (isSuccess) {
-			self._success({...defaultArgs, payload: {args, result}})
-		} else {
-			self._fail({...defaultArgs, payload: {args, result}})
-		}
-		self._finally({...defaultArgs, payload: {args, result}})
-	}
-}
-
-const actionCreator = status => ({dispatch, name, payload}) => {
-	dispatch({type: `${name}_${status.toUpperCase()}`}, payload)
-}
-
-const actionsCreators = ['pending', 'success', 'fail', 'finally']
+const actions = ['pending', 'success', 'fail', 'finally']
 	.map(a => {
 		return {[a]: actionCreator(a)}
 	})
@@ -40,24 +10,43 @@ const actionsCreators = ['pending', 'success', 'fail', 'finally']
 		return Object.assign({}, a, b)
 	})
 
-const check = ({ok}) => ok
-const transformBeforeCheck = a => a
-const transformAfterCheck = a => a
+const id = a => a
+const ids = ['createMeta', 'check', 'beforeCheck', 'afterCheck']
+	.map(a => ({[a]: id}))
+	.reduce((a, b) => {
+		return Object.assign({}, a, b)
+	})
 
 const behaviours = {
-	...actionsCreators,
-	check,
-	transformBeforeCheck,
-	transformAfterCheck
+	...actions,
+	...ids
 }
 
-Object.keys(behaviours).map(key => {
-	const initialBehaviour = behaviours[key]
-	const privateName = `_${key}`
-	Awral[key] = (fn = initialBehaviour) => {
-		return Awral.clone(privateName)(fn)
+function Awral (asyncFunction) {
+	return name => (...args) => async (dispatch, getState) => {
+		const defaultArgs = {dispatch, getState, name}
+		const meta = this.createMeta(args)
+		this.pending({...defaultArgs, meta})
+		const preResult = this.beforeCheck.apply(args)
+		const obtainedResult = await asyncFunction.apply(preResult)
+		const isSuccess = this.check(obtainedResult)
+		const payload = this.afterCheck(obtainedResult)
+
+		if (isSuccess) {
+			this.success({...defaultArgs, payload, meta})
+		} else {
+			this.fail({...defaultArgs, payload, error: true, meta})
+		}
+		this.finally({...defaultArgs, meta})
 	}
-})
-// let pen = Awral.pending(a => a)
-// let keys = Object.getOwnPropertyNames(pen)
-export default Awral
+}
+
+const ofFn = function (newMethods = {}) {
+	const methods = {...this.methods, ...newMethods}
+	const bindedAwral = Awral.bind(methods)
+	bindedAwral.methods = methods
+	bindedAwral.of = ofFn.bind(bindedAwral)
+	return bindedAwral
+}
+
+export default ofFn.call({methods: behaviours})
