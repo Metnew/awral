@@ -9,7 +9,7 @@
 > Assume you're using redux and redux-thunk.
 
 ## README IN PROGRESS.
-## PLEASE, CHECK SOURCES.
+## PLEASE, CHECK SOURCES!
 
 When you work with async stuff you probably have next code in your container:
 ```js
