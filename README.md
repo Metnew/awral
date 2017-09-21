@@ -20,19 +20,32 @@ Where `GET_USERS` is a next async action:
 ```js
 export const GET_USER = id => async dispatch => {
 	dispatch({type: 'GET_USER_PENDING'})
-	const result = await getUserFromServer(id)
-	if (resultOK(result)) {
-		dispatch({type: 'GET_USER_SUCCESS', result})
+	const payload = await getUserFromServer(id)
+	if (resultOK(payload)) {
+		dispatch({type: 'GET_USER_SUCCESS', payload})
 	} else {
-		dispatch({type: 'GET_USER_FAIL', result})
+		dispatch({type: 'GET_USER_FAIL', payload, error:true})
 	}
-	dispatch({type: 'GET_USER_FINALLY', result})
+	dispatch({type: 'GET_USER_FINALLY', payload})
 }
 
 ```
 
-This pattern is
 With AWRAL you can just write:
 ```js
 const GET_USER = awral(getUserFromServer)('GET_USER')
+```
+
+### How?
+There is only one method: `Awral.of()`. `of()` allows you to extend/rewrite your "awrals":
+```js
+import Awral from 'awral'
+const checkResponseFromAPI = (result) => result.ok
+const transformResultAfter = (result) => result.data
+// const success = ({dispatch, payload}) => {}
+
+const awralCheck = Awral.of({check: checkResponseFromAPI})
+const awralCheckTransformBefore = awralCheck.of({})
+const awral = Awral.of(check: checkResponseFromAPI)
+
 ```
