@@ -1,52 +1,48 @@
-const actionCreator = status => ({dispatch, getState, name, ...rest}) => {
+// @flow
+const actionCreator = (status: string) => ({dispatch, getState, name, ...rest}) => {
 	dispatch({type: `${name}_${status.toUpperCase()}`, ...rest})
 }
 
-const actions = ['pending', 'success', 'fail', 'finally']
-	.map(a => {
+const getDefaultBehaviours = () => {
+	const actions = ['pending', 'success', 'fail', 'finally'].map(a => {
 		return {[a]: actionCreator(a)}
 	})
-	.reduce((a, b) => {
+
+	const id = a => a
+	const ids = ['createMeta', 'check', 'beforeCheck', 'afterCheck'].map(a => ({
+		[a]: id
+	}))
+
+	return actions.concat(ids).reduce((a, b) => {
 		return Object.assign({}, a, b)
 	})
-
-const id = a => a
-const ids = ['createMeta', 'check', 'beforeCheck', 'afterCheck']
-	.map(a => ({[a]: id}))
-	.reduce((a, b) => {
-		return Object.assign({}, a, b)
-	})
-
-const behaviours = {
-	...actions,
-	...ids
 }
 
 function Awral (asyncFunction) {
 	return name => (...args) => async (dispatch, getState) => {
-		const defaultArgs = {dispatch, getState, name}
 		const meta = this.createMeta(args)
-		this.pending({...defaultArgs, meta})
-		const preResult = this.beforeCheck.apply(args)
-		const obtainedResult = await asyncFunction.apply(preResult)
+		const defaultArgs = {dispatch, getState, name, meta}
+		this.pending(defaultArgs)
+		const preResult = this.beforeCheck.apply(null, args)
+		const obtainedResult = await asyncFunction.apply(null, preResult)
 		const isSuccess = this.check(obtainedResult)
 		const payload = this.afterCheck(obtainedResult)
 
 		if (isSuccess) {
-			this.success({...defaultArgs, payload, meta})
+			this.success({...defaultArgs, payload})
 		} else {
-			this.fail({...defaultArgs, payload, error: true, meta})
+			this.fail({...defaultArgs, payload, error: true})
 		}
-		this.finally({...defaultArgs, meta})
+		this.finally(defaultArgs)
 	}
 }
 
-const ofFn = function (newMethods = {}) {
-	const methods = {...this.methods, ...newMethods}
-	const bindedAwral = Awral.bind(methods)
-	bindedAwral.methods = methods
+const ofFn = function (newBehaviours = {}) {
+	const behaviours = {...this.behaviours, ...newBehaviours}
+	const bindedAwral = Awral.bind(behaviours)
+	bindedAwral.behaviours = behaviours
 	bindedAwral.of = ofFn.bind(bindedAwral)
 	return bindedAwral
 }
 
-export default ofFn.call({methods: behaviours})
+export default ofFn.call({behaviours: getDefaultBehaviours()})
