@@ -71,11 +71,11 @@
 		"url": "https://github.com/Metnew/awral.git"
 	},
 	"files": [
-    "dist",
-    "lib",
-    "es",
-    "src"
-  ],
+		"dist",
+		"lib",
+		"es",
+		"src"
+	],
 	"keywords": [
 		"react",
 		"redux",
