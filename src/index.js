@@ -1,5 +1,4 @@
-// @flow
-const actionCreator = (status: string) => ({dispatch, getState, name, ...rest}) => {
+const actionCreator = status => ({dispatch, name, ...rest}) => {
 	dispatch({type: `${name}_${status.toUpperCase()}`, ...rest})
 }
 
@@ -9,7 +8,7 @@ const getDefaultBehaviours = () => {
 	})
 
 	const id = a => a
-	const ids = ['createMeta', 'check', 'beforeCheck', 'afterCheck'].map(a => ({
+	const ids = ['meta', 'check', 'beforeCheck', 'afterCheck'].map(a => ({
 		[a]: id
 	}))
 
@@ -19,21 +18,27 @@ const getDefaultBehaviours = () => {
 }
 
 function Awral (asyncFunction) {
-	return name => (...args) => async (dispatch, getState) => {
-		const meta = this.createMeta(args)
+	return name => (...args) => (dispatch, getState) => {
+		const meta = this.meta(args)
 		const defaultArgs = {dispatch, getState, name, meta}
 		this.pending(defaultArgs)
 		const preResult = this.beforeCheck.apply(null, args)
-		const obtainedResult = await asyncFunction.apply(null, preResult)
-		const isSuccess = this.check(obtainedResult)
-		const payload = this.afterCheck(obtainedResult)
+		asyncFunction
+			.apply(null, preResult)
+			.then(res => {
+				const isSuccess = this.check(res)
+				const payload = this.afterCheck(res)
 
-		if (isSuccess) {
-			this.success({...defaultArgs, payload})
-		} else {
-			this.fail({...defaultArgs, payload, error: true})
-		}
-		this.finally(defaultArgs)
+				if (isSuccess) {
+					this.success({...defaultArgs, payload})
+				} else {
+					this.fail({...defaultArgs, payload, error: true})
+				}
+				this.finally(defaultArgs)
+			})
+			// .catch(e => {
+			// 	this.fail({...defaultArgs, payload: e, error: true})
+			// })
 	}
 }
 
