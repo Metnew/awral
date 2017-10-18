@@ -59,7 +59,7 @@
 		"semantic-release": "semantic-release pre && npm publish && semantic-release post"
 	},
 	"engines": {
-		"node": ">=6"
+		"node": ">=8"
 	},
 	"author": {
 		"name": "Vladimir Metnew",
@@ -89,9 +89,5 @@
 	"bugs": {
 		"url": "https://github.com/Metnew/awral/issues"
 	},
-	"homepage": "https://github.com/Metnew/awral#readme",
-	"bundlesize": {
-		"path": "./src/index.js",
-		"maxSize": "3 kB"
-	}
+	"homepage": "https://github.com/Metnew/awral#readme"
 }
