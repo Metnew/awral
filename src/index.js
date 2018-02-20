@@ -8,51 +8,74 @@ const getDefaultBehaviours = () => {
 		'success',
 		'fail',
 		'finally',
-		'beforePending'
-	].map(a => {
-		return {[a]: actionCreator(a)}
-	})
+		'failBeforePending'
+	].map(a => ({[a]: actionCreator(a)}))
+	const ids = ['meta', 'check', 'fnPayload', 'afterCheck', 'resolve'].map(
+		a => ({
+			[a]: x => x
+		})
+	)
 
-	const id = a => a
-	const ids = ['meta', 'check', 'beforeCheck', 'afterCheck'].map(a => ({
-		[a]: id
-	}))
-
-	return actions.concat(ids).reduce((a, b) => {
-		return Object.assign({}, a, b)
-	})
+	return actions.concat(ids).reduce((a, b) => Object.assign({}, a, b))
 }
 
 function Awral (asyncFunction) {
 	return name => (...args) => (dispatch, getState) => {
-		const meta = this.meta.apply(null, args) || null
-		const defaultArgs = {dispatch, getState, name, meta}
-		this.beforePending && this.beforePending(defaultArgs)
-		this.pending && this.pending(defaultArgs)
-		const preResult = this.beforeCheck.apply(null, args)
-		return asyncFunction(preResult).then(res => {
-			const isSuccess = this.check(res)
-			const payload = this.afterCheck(res)
+		const basicArgs = {dispatch, getState, name, _: this._}
+		const meta = this.meta.apply(basicArgs, args) || null
+		const defaultArgs = {...basicArgs, meta}
 
-			if (isSuccess) {
-				this.success({...defaultArgs, payload})
-			} else {
-				this.fail({...defaultArgs, payload, error: true})
+		if (this.failBeforePending) {
+			const failBeforePendingPayload = this.failBeforePending.apply(
+				defaultArgs,
+				args
+			)
+			if (failBeforePendingPayload) {
+				return this.fail({
+					...defaultArgs,
+					payload: failBeforePendingPayload,
+					error: true
+				})
 			}
-			this.finally && this.finally(defaultArgs)
-		})
-		// .catch(e => {
-		// 	this.fail({...defaultArgs, payload: e, error: true})
-		// })
+		}
+		this.pending && this.pending(defaultArgs)
+		const preResult = this.fnPayload.apply(defaultArgs, args)
+
+		let res
+
+		try {
+			const asyncFnWrapped = await asyncFunction(preResult)
+			res = await dispatch(asyncFnWrapped)
+		} catch (e) {
+			throw new Error('Awral caught error in async action:', e)
+		}
+
+		const isSuccess = this.check(res)
+		const status = isSuccess ? 'success' : 'fail'
+		const payload = this.afterCheck(res)
+
+		if (isSuccess) {
+			this.success({...defaultArgs, payload, status})
+		} else {
+			this.fail({...defaultArgs, payload, status})
+		}
+		this.finally && this.finally(defaultArgs)
+
+		return this.resolve({payload, status})
 	}
 }
 
-const ofFn = function (newBehaviours = {}) {
-	const behaviours = {...this.behaviours, ...newBehaviours}
+const defaultBehaviours = getDefaultBehaviours()
+const ofFn = function(newBehaviours = {}) {
+	const behaviours = {
+		...this.behaviours,
+		...newBehaviours,
+		_: defaultBehaviours
+	}
 	const bindedAwral = Awral.bind(behaviours)
 	bindedAwral.behaviours = behaviours
 	bindedAwral.of = ofFn.bind(bindedAwral)
 	return bindedAwral
 }
 
-export default ofFn.call({behaviours: getDefaultBehaviours()})
+export default ofFn.call({behaviours: defaultBehaviours})
