@@ -25,7 +25,7 @@
 		"eslint-plugin-promise": "^3.5.0",
 		"eslint-plugin-react": "^7.3.0",
 		"eslint-plugin-standard": "^3.0.1",
-		"flow-bin": "^0.59.0",
+		"flow-bin": "^0.78.0",
 		"gzip-size-cli": "^2.1.0",
 		"husky": "^0.14.3",
 		"jest": "^21.1.0",
